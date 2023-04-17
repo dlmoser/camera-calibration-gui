@@ -3,13 +3,19 @@ from tkinter import filedialog
 import glob
 import os
 import numpy as np
+from PIL import Image
+
 
 from image_recording_frame import ImageRecordingFrame
+from calibration_frame import CalibrationFrame
 
 
 
 # Supported themes: green, dark-blue, blue
 ctk.set_appearance_mode("dark")
+
+
+
 
 
 
@@ -21,6 +27,11 @@ class App(ctk.CTk):
         self.geometry("900x600")
         self.title("Camera Calibration App")
         self.minsize(600, 400)
+
+        # folder where calibration images are saved
+        # the variable is on top level to share it between recording and calibration frames
+        self.selected_image_save_folder = None
+  
 
         self.grid_rowconfigure((0), weight=0)
         self.grid_rowconfigure((1), weight=1)
@@ -34,11 +45,24 @@ class App(ctk.CTk):
         self.image_record_mode_button.configure(fg_color="grey")
         self.calibration_mode_button = ctk.CTkButton(master=self.top_frame, text="Calibration Mode", command = lambda: self.set_main_mode("calibration_mode"))
         self.calibration_mode_button.pack(side="right", fill="x", expand=1, padx=5, pady=5)
-        # self.image_record_mode_button.configure(state="disabled")
-        # self.image_record_mode_button.configure(fg_color="grey")
 
-        self.main_frame = ImageRecordingFrame(self)
+        # self.main_frame = ImageRecordingFrame(self)
+        # self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+
+        # self.main_frame = CalibrationFrame(self)
+        # self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+
+
+        self.DEVELOP_CALIBRATION_MODE()
+
+
+    def DEVELOP_CALIBRATION_MODE(self):
+        self.selected_image_save_folder = "/Users/davidmoser/Downloads/test_save_folder"
+        self.set_main_mode("calibration_mode")
+
+        self.main_frame = CalibrationFrame(self)
         self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+
 
 
     def set_main_mode(self, mode):

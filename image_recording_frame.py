@@ -6,7 +6,7 @@ from PIL import Image
 import numpy as np
 
 from cam_video_stream import CamStream
-from camera_calibration.find_chessboard_corners import find_chessboard_corners
+from camera_calibration.find_chessboard_corners import find_and_draw_chessboard_corners
 
 
 class LeftSettingBox(ctk.CTkFrame):
@@ -15,7 +15,6 @@ class LeftSettingBox(ctk.CTkFrame):
         self.master = master
         self.cam_inst = cam_inst
 
-        self.master.selected_save_folder = None
 
         self.grid_rowconfigure((0,1), weight=0)
         self.grid_rowconfigure((4), weight=1)
@@ -52,7 +51,7 @@ class LeftSettingBox(ctk.CTkFrame):
         folder_selected = filedialog.askdirectory()
         print("folder selected: ", folder_selected)    
         if folder_selected == "":
-            self.master.selected_save_folder = None
+            self.master.master.selected_image_save_folder = None
             self.selected_save_folder_label.configure(text="No Folder Selected")
             print("write error dialog")
 
@@ -61,7 +60,7 @@ class LeftSettingBox(ctk.CTkFrame):
             self.save_image_button.configure(fg_color="grey")
         else:
             self.selected_save_folder_label.configure(text=os.path.split(folder_selected)[-1])
-            self.master.selected_save_folder = folder_selected
+            self.master.master.selected_image_save_folder = folder_selected
 
             # enable save button 
             self.save_image_button.configure(state = "normal") 
@@ -81,11 +80,11 @@ class LeftSettingBox(ctk.CTkFrame):
             image_name = "image_{:03d}.png".format(new_image_number)
             print("image_name", image_name)
 
-        Image.fromarray(self.cam_inst.frame).save(os.path.join(self.master.selected_save_folder, image_name))
+        Image.fromarray(self.cam_inst.frame).save(os.path.join(self.master.master.selected_image_save_folder, image_name))
         
 
     def get_images_in_folder(self):
-        return sorted(glob.glob(os.path.join(self.master.selected_save_folder, "*.png")))
+        return sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
 
 
 
@@ -112,7 +111,7 @@ class ImageBoxFrame(ctk.CTkFrame):
             if "No Detector" == self.master.calibration_detector_selector.get():
                 frame = self.cam_inst.frame.copy()
             elif "Chessboard" == self.master.calibration_detector_selector.get():
-                frame = find_chessboard_corners(self.cam_inst.frame.copy())
+                frame = find_and_draw_chessboard_corners(self.cam_inst.frame.copy())
             self.current_frame = Image.fromarray(frame)
             display_frame = ctk.CTkImage(dark_image = self.current_frame, size=self.current_size)
             self.image_label.configure(image=display_frame)
@@ -141,7 +140,7 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
 
     def check_for_images_in_folder(self):
         try:
-            self.images_in_folder = sorted(glob.glob(os.path.join(self.master.selected_save_folder, "*.png")))
+            self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
             # check if we need to update the image preview
             if len(self.image_labels) != len(self.images_in_folder):
                 self.update_image_preview()
@@ -173,7 +172,7 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
     def remove_image(self, img_path):
         print("remove_image", img_path)
         os.remove(img_path)
-        self.images_in_folder = sorted(glob.glob(os.path.join(self.master.selected_save_folder, "*.png")))
+        self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
         self.update_image_preview()
 
 
@@ -182,6 +181,7 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
 class ImageRecordingFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.master = master
 
         self.cam_inst = CamStream()
 
