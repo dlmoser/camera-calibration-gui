@@ -79,7 +79,7 @@ class App(ctk.CTk):
             self.calibration_mode_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
 
         elif mode == "calibration_mode":
-            self.main_frame = ctk.CTkFrame(self)
+            self.main_frame = CalibrationFrame(self)
             self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
             self.calibration_mode_button.configure(state="disabled")
             self.calibration_mode_button.configure(fg_color="grey")

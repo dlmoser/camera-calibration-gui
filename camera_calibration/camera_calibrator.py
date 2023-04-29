@@ -7,11 +7,11 @@ import time
 class ChessboardCalibrator():
     calibrator_list = ["normal", "fisheye"]
 
-    def __init__(self, chessboard_patter = (9,6), claibration_mode = "normal"):
+    def __init__(self, chessboard_patter = (9,6), calibration_mode = "normal"):
         self.chessboard_pattern = chessboard_patter
         self.init_object_and_image_points()
         self.chessboard_patter = chessboard_patter
-        self.calibration_mode = claibration_mode
+        self.calibration_mode = calibration_mode
 
 
     def get_calibrator_list(self):
@@ -66,28 +66,6 @@ class ChessboardCalibrator():
         return img
 
 
-    # def start_normal_calibration(self, img_path_list):
-    #     print("img_path_list", img_path_list)
-
-    
-        
-    # for img_path in img_path_list:
-    #     img = cv2.imread(img_path)
-    #     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        # ret, corners = cv2.findChessboardCorners(gray_img, corner_layout)
-
-        # # If found, add object points, image points (after refining them)
-        # if ret == True:
-        #     objpoints.append(objp)
-        #     corners2 = cv2.cornerSubPix(gray_img, corners, (11,11), (-1,-1), (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001))
-        #     imgpoints.append(corners2)
-        #     # Draw and display the corners
-        #     cv2.drawChessboardCorners(img, corner_layout, corners2, ret)
-        #     cv2.imshow('img', img)
-        #     cv2.waitKey(50)
-
-
 class NormalCalibrator():
 
     calibration_flag_dict = {"USE_INTRINSIC_GUESS": cv2.CALIB_USE_INTRINSIC_GUESS,
@@ -116,20 +94,33 @@ class NormalCalibrator():
     
 
     def set_calibration_flags(self, select_flag_list):
+        self.selected_calibration_flags = 0
         for flag_sting in select_flag_list:
             if flag_sting in self.get_available_flags_names():
                 self.selected_calibration_flags += self.calibration_flag_dict[flag_sting]
             else:
                 print("Warning: flag {} not known".format(flag_sting))
 
+    def set_camera_matrix(self, K):
+        self.K = K
+
+    def set_distortion_coefficients(self, dc):
+        self.dc = dc
+
 
     def calculate_calibration_matrix(self, objpoints, imgpoints, img_shapexy):
         self.img_shape_xy = img_shapexy
+
+
+        print("self.img_shape_xy ", self.img_shape_xy)
+        print("self.K ", self.K)
+        print("self.dc ", self.dc)
+        print("self.selected_calibration_flags ", self.selected_calibration_flags)
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, 
                                                                                     imgpoints,
                                                                                     self.img_shape_xy, 
-                                                                                    None, 
-                                                                                    None, 
+                                                                                    self.K, 
+                                                                                    self.dc, 
                                                                                     flags=self.selected_calibration_flags)
         
         self.Knew, self.ROI = cv2.getOptimalNewCameraMatrix(self.mtx, 

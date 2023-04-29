@@ -4,6 +4,8 @@ import os
 import glob
 from PIL import Image
 import numpy as np
+import threading
+
 
 from cam_video_stream import CamStream
 from camera_calibration.find_chessboard_corners import find_and_draw_chessboard_corners
@@ -67,20 +69,24 @@ class LeftSettingBox(ctk.CTkFrame):
             self.save_image_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
         
     def save_image(self):
-        print("get_images_in_folder", self.get_images_in_folder())
-        images_in_folder = self.get_images_in_folder()
-        if len(images_in_folder) == 0:
-            image_name = "image_001.png"
 
-        else:
-            last_image = images_in_folder[-1]
-            last_image_name = os.path.split(last_image)[-1]
-            last_image_number = int(last_image_name.split("_")[-1].split(".")[0])
-            new_image_number = last_image_number + 1
-            image_name = "image_{:03d}.png".format(new_image_number)
-            print("image_name", image_name)
+        def save_image_thread():
+            images_in_folder = self.get_images_in_folder()
+            if len(images_in_folder) == 0:
+                image_name = "image_001.png"
 
-        Image.fromarray(self.cam_inst.frame).save(os.path.join(self.master.master.selected_image_save_folder, image_name))
+            else:
+                last_image = images_in_folder[-1]
+                last_image_name = os.path.split(last_image)[-1]
+                last_image_number = int(last_image_name.split("_")[-1].split(".")[0])
+                new_image_number = last_image_number + 1
+                image_name = "image_{:03d}.png".format(new_image_number)
+
+
+            print("???", os.path.join(self.master.master.selected_image_save_folder, image_name))
+            Image.fromarray(self.cam_inst.frame.copy()).save(os.path.join(self.master.master.selected_image_save_folder, image_name))
+        threading.Thread(target=save_image_thread).start()
+        print("here")
         
 
     def get_images_in_folder(self):
@@ -95,7 +101,6 @@ class ImageBoxFrame(ctk.CTkFrame):
         self.master = master
         self.cam_inst = cam_inst
         self.current_size = None
-        
 
         self.bind('<Configure>', self.resizer)
 
@@ -170,10 +175,10 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
 
 
     def remove_image(self, img_path):
-        print("remove_image", img_path)
         os.remove(img_path)
         self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
         self.update_image_preview()
+
 
 
 
