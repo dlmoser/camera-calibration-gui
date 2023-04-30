@@ -9,6 +9,7 @@ import threading
 
 from cam_video_stream import CamStream
 from camera_calibration.find_chessboard_corners import find_and_draw_chessboard_corners
+from custom_widgets import LoadingAnimation
 
 
 class LeftSettingBox(ctk.CTkFrame):
@@ -24,7 +25,7 @@ class LeftSettingBox(ctk.CTkFrame):
 
         ctk.CTkLabel(master=self, text="Select Camera").grid(row=0, column=0, padx=5, pady=5, sticky="ewn")
 
-        available_cams, selected_cam = self.cam_inst.scan_for_available_cameras()
+        available_cams, selected_cam = self.cam_inst.get_available_cameras()
         self.camera_selector = ctk.CTkComboBox(master=self,values=[elem[0] for elem in available_cams], command=self.cam_inst.cam_changed)
         self.camera_selector.grid(row=1, column=0, padx=5, pady=5, sticky="ewn")
 
@@ -188,8 +189,28 @@ class ImageRecordingFrame(ctk.CTkFrame):
         super().__init__(master, **kwargs)
         self.master = master
 
-        self.cam_inst = CamStream()
+        self.create_loading_frame()
 
+        self.camera_init_thread()
+
+        self.create_image_recording_frame_when_cam_init_is_finished()
+
+
+    def create_loading_frame(self):
+        self.loading_frame = LoadingAnimation(self)
+        self.loading_frame.pack(fill="both", expand=True)
+
+    def camera_init_thread(self):
+        self.cam_inst = None
+        def init_cam():
+            self.cam_inst = CamStream()
+        threading.Thread(target=init_cam).start()
+
+    def create_image_recording_frame(self):
+        try:
+            self.loading_frame.destroy()
+        except:
+            pass
         self.grid_rowconfigure((0), weight=4)
         self.grid_rowconfigure((1), weight=1)
         self.grid_columnconfigure((0), weight=1)
@@ -202,7 +223,12 @@ class ImageRecordingFrame(ctk.CTkFrame):
         self.left_setting_box.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         
         ImagePreviewFrame(master=self, height=100).grid(row=1, column=0, columnspan=2, padx=10, pady=(0,10), sticky="nsew")
-
+    
+    def create_image_recording_frame_when_cam_init_is_finished(self):
+        if self.cam_inst is not None:
+            self.create_image_recording_frame()
+        else:
+            self.after(100, self.create_image_recording_frame_when_cam_init_is_finished)
 
     def destroy(self):
         print("destroy ImageRecordingFrame")
@@ -210,3 +236,30 @@ class ImageRecordingFrame(ctk.CTkFrame):
             self.cam_inst.stop_stream()
         return super().destroy()
 
+
+
+    def test_func(self):
+
+        self.main_frame = LoadingAnimation(self)
+        self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+
+        self.cam_inst = None
+        def init_cam():
+            self.cam_inst = CamStream()
+
+
+        import threading 
+        threading.Thread(target=init_cam).start()
+
+        def check_if_init_is_finished():
+            print("here")
+            if self.cam_inst is not None:
+                try:
+                    self.main_frame.destroy()
+                except:
+                    pass
+                self.main_frame = ImageRecordingFrame(self, self.cam_inst)
+                self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+            else:
+                self.after(100, check_if_init_is_finished)
+        check_if_init_is_finished()

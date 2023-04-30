@@ -17,8 +17,9 @@ class CamStream:
         self.stop_all = False
         self.available_cams = []
         self.selected_cam = None
+        self.scanned_for_available_cams = False
         self.set_fake_frame()
-    
+        self.scan_for_available_cameras()
 
     def cam_changed(self, select_cam_name):
         self.stop_stream()
@@ -32,13 +33,6 @@ class CamStream:
         # scan the first 10 idx and check if there is a camera behind
         camera_index = 0
         self.available_cams = []
-        # for i in range(10):
-        #     print("!!!!")
-        #     cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
-        #     print("?????????")
-        #     if cap.isOpened():
-        #         cam_name = f"{int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))}x{int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))}[px], {int(cap.get(cv2.CAP_PROP_FPS))}[fps]"
-        #         self.available_cams.append([cam_name, i])
 
         while True:
             cap = cv2.VideoCapture(camera_index)
@@ -49,10 +43,14 @@ class CamStream:
                 camera_index += 1
             else:
                 break
-
         # select the first cam as default
         if len(self.available_cams) >= 1:
             self.selected_cam = 0
+        self.scanned_for_available_cams = True
+        
+        return self.available_cams, self.selected_cam
+    
+    def get_available_cameras(self):
         return self.available_cams, self.selected_cam
 
     def create(self):

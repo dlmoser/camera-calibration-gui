@@ -4,15 +4,18 @@ import glob
 import os
 import numpy as np
 from PIL import Image
+import time
 
 
 from image_recording_frame import ImageRecordingFrame
 from calibration_frame import CalibrationFrame
-
+from cam_video_stream import CamStream
+from custom_widgets import LoadingAnimation
 
 
 # Supported themes: green, dark-blue, blue
 ctk.set_appearance_mode("dark")
+
 
 
 
@@ -46,14 +49,13 @@ class App(ctk.CTk):
         self.calibration_mode_button = ctk.CTkButton(master=self.top_frame, text="Calibration Mode", command = lambda: self.set_main_mode("calibration_mode"))
         self.calibration_mode_button.pack(side="right", fill="x", expand=1, padx=5, pady=5)
 
-        # self.main_frame = ImageRecordingFrame(self)
-        # self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+        self.main_frame = ImageRecordingFrame(self)
+        self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
         # self.main_frame = CalibrationFrame(self)
         # self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
-
-        self.DEVELOP_CALIBRATION_MODE()
+        # self.DEVELOP_CALIBRATION_MODE()
 
 
     def DEVELOP_CALIBRATION_MODE(self):
