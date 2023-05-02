@@ -40,42 +40,46 @@ class LeftSettingBox(ctk.CTkFrame):
 
 
         ctk.CTkButton(master=self, text="Select Image Save Folder", command=self.select_image_save_folder).grid(row=4, column=0, padx=5, pady=5, sticky="ews")
-        self.selected_save_folder_label = ctk.CTkLabel(master=self, text="No Folder Selected")
+        self.selected_save_folder_label = ctk.CTkLabel(master=self, text="")
         self.selected_save_folder_label.grid(row=5, column=0, padx=5, pady=5, sticky="ewn")
 
-        
+        # trace when selected_image_save_folder variable is changed to adapt the label and the save button mode
+        self.master.master.selected_image_save_folder.trace('w', self.write_image_folder_variable)
+
+
         self.save_image_button = ctk.CTkButton(master=self, text="Save Image", command=self.save_image)
         self.save_image_button.grid(row=6, column=0, padx=5, pady=5, sticky="ews")
         self.save_image_button.configure(state="disabled")
         self.save_image_button.configure(fg_color="grey")
 
+        # call the function once to set the init value
+        self.write_image_folder_variable()
+
+
+    def write_image_folder_variable(self, *args):
+        selected_folder = self.master.master.selected_image_save_folder.get()
+        if os.path.isdir(selected_folder):
+            self.selected_save_folder_label.configure(text=os.path.split(selected_folder)[-1])
+            # selected_folder = self.master.master.selected_image_save_folder.set(selected_folder)
+            self.save_image_button.configure(state = "normal") 
+            self.save_image_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
+        else:
+            self.selected_save_folder_label.configure(text="No Folder Selected")
+            self.save_image_button.configure(state="disabled")
+            self.save_image_button.configure(fg_color="grey")
+
 
     def select_image_save_folder(self):
         folder_selected = filedialog.askdirectory()
         print("folder selected: ", folder_selected)    
-        if folder_selected == "":
-            self.master.master.selected_image_save_folder = None
-            self.selected_save_folder_label.configure(text="No Folder Selected")
-            print("write error dialog")
+        self.master.master.selected_image_save_folder.set(folder_selected)
 
-            # disable save button
-            self.save_image_button.configure(state="disabled")
-            self.save_image_button.configure(fg_color="grey")
-        else:
-            self.selected_save_folder_label.configure(text=os.path.split(folder_selected)[-1])
-            self.master.master.selected_image_save_folder = folder_selected
-
-            # enable save button 
-            self.save_image_button.configure(state = "normal") 
-            self.save_image_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
         
     def save_image(self):
-
         def save_image_thread():
             images_in_folder = self.get_images_in_folder()
             if len(images_in_folder) == 0:
                 image_name = "image_001.png"
-
             else:
                 last_image = images_in_folder[-1]
                 last_image_name = os.path.split(last_image)[-1]
@@ -83,15 +87,15 @@ class LeftSettingBox(ctk.CTkFrame):
                 new_image_number = last_image_number + 1
                 image_name = "image_{:03d}.png".format(new_image_number)
 
-
-            print("???", os.path.join(self.master.master.selected_image_save_folder, image_name))
-            Image.fromarray(self.cam_inst.frame.copy()).save(os.path.join(self.master.master.selected_image_save_folder, image_name))
+            img_save_path = os.path.join(self.master.master.selected_image_save_folder.get(), image_name)
+            print("Save Image: ", img_save_path)
+            Image.fromarray(self.cam_inst.frame.copy()).save(img_save_path)
         threading.Thread(target=save_image_thread).start()
         print("here")
         
 
     def get_images_in_folder(self):
-        return sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
+        return sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
 
 
 
@@ -143,10 +147,9 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
         self.check_for_images_in_folder()
 
 
-
     def check_for_images_in_folder(self):
         try:
-            self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
+            self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
             # check if we need to update the image preview
             if len(self.image_labels) != len(self.images_in_folder):
                 self.update_image_preview()
@@ -177,9 +180,8 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
 
     def remove_image(self, img_path):
         os.remove(img_path)
-        self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
+        self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
         self.update_image_preview()
-
 
 
 
@@ -237,29 +239,3 @@ class ImageRecordingFrame(ctk.CTkFrame):
         return super().destroy()
 
 
-
-    def test_func(self):
-
-        self.main_frame = LoadingAnimation(self)
-        self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-
-        self.cam_inst = None
-        def init_cam():
-            self.cam_inst = CamStream()
-
-
-        import threading 
-        threading.Thread(target=init_cam).start()
-
-        def check_if_init_is_finished():
-            print("here")
-            if self.cam_inst is not None:
-                try:
-                    self.main_frame.destroy()
-                except:
-                    pass
-                self.main_frame = ImageRecordingFrame(self, self.cam_inst)
-                self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-            else:
-                self.after(100, check_if_init_is_finished)
-        check_if_init_is_finished()

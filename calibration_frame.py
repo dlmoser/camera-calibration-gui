@@ -240,7 +240,24 @@ class NormalCalibrationFrame(ctk.CTkFrame):
 
         NormalCalibrationSettings(master=scroll_frame, calibration_inst=self.calibration_inst).grid(row=2, column=0, padx=0, pady=5, sticky="ew")
 
-        ctk.CTkButton(master=self, text="Start Calibration", command = self.start_calibration).grid(row=1, column=0, padx=5, pady=5, sticky="ews")
+        ctk.CTkButton(master=self, text="Start Calibration", command = self.start_calibration).grid(row=1, column=0, padx=10, pady=5, sticky="ews")
+
+        ctk.CTkButton(master=self, text="Select Image Save Folder", command = self.master.master.select_image_save_folder).grid(row=2, column=0, padx=10, pady=5, sticky="ewns")
+
+        self.selected_save_folder_label = ctk.CTkLabel(master=self, text="No Folder Selected", height=20)
+        self.selected_save_folder_label.grid(row=3, column=0, padx=10, pady=5, sticky="ewns")
+
+        # trace when selected_image_save_folder variable is changed to adapt the label and the save button mode
+        self.master.master.master.master.selected_image_save_folder.trace('w', self.write_image_folder_variable)
+
+
+    def write_image_folder_variable(self, *args):
+        selected_folder = self.master.master.master.master.selected_image_save_folder.get()
+        if os.path.isdir(selected_folder):
+            self.selected_save_folder_label.configure(text=os.path.split(selected_folder)[-1])
+            # selected_folder = self.master.master.selected_image_save_folder.set(selected_folder)
+        else:
+            self.selected_save_folder_label.configure(text="No Folder Selected")
 
 
 
@@ -265,8 +282,6 @@ class NormalCalibrationFrame(ctk.CTkFrame):
 
                 self.master.master.image_box_frame.set_display_image(img)
                 time.sleep(0.1)
-
-            
 
 
         threading.Thread(target=calibration_thread).start()
@@ -301,25 +316,6 @@ class NormalCalibrationFrame(ctk.CTkFrame):
         # self.calibration_inst.start_normal_calibration(self.master.image_preview_frame.images_in_folder)   
 
 
-
-class MyTabView(ctk.CTkTabview):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
-
-        # create tabs
-        self.add("Normal")
-        self.add("Fisheye")
-
-        self.grid_rowconfigure((0), weight=1)
-        self.grid_columnconfigure((0), weight=1)
-
-        # add widgets on tabs
-        self.label = ctk.CTkLabel(master=self.tab("Normal"))
-        self.label.grid(row=0, column=0, padx=20, pady=10)
-
-
-
-
 class LeftSettingBox(ctk.CTkTabview):
     def __init__(self, master, calibration_inst, **kwargs):
         super().__init__(master, **kwargs)
@@ -330,26 +326,6 @@ class LeftSettingBox(ctk.CTkTabview):
         self.add("Normal")
         self.add("Fisheye")
 
-
-
-
-        # # add widgets on tabs
-        # self.label = ctk.CTkLabel(master=self.tab("Normal"))
-        # self.label.grid(row=0, column=0, padx=0, pady=0)
-
-
-        # MyTabView(master=self, bg_color = "transparent").grid(row=0, column=0, padx=0, pady=0, sticky="ewns")
-
-        # self.grid_rowconfigure((0,1), weight=0)
-        # self.grid_rowconfigure((4), weight=1)
-        # self.grid_columnconfigure((0), weight=1)
-
-        # ctk.CTkLabel(master=self, text="Select Calibrator").grid(row=0, column=0, padx=5, pady=5, sticky="ewn")
-
-
-        # self.calibrator_selector = ctk.CTkComboBox(master=self,values=calibration_inst.get_calibrator_list()) #, command=self.cam_inst.cam_changed)
-        # self.calibrator_selector.grid(row=1, column=0, padx=5, pady=5, sticky="ewn")
-
      
         self.tab("Normal").grid_rowconfigure((0), weight=1)
         self.tab("Normal").grid_columnconfigure((0), weight=1)
@@ -357,12 +333,18 @@ class LeftSettingBox(ctk.CTkTabview):
         self.normal_calibration_frame = NormalCalibrationFrame(master = self.tab("Normal"), calibration_inst = self.calibration_inst, fg_color = "transparent")
         self.normal_calibration_frame.grid(row=0, column=0, padx=0, pady=0, sticky="ewns")
 
+        # self.select_button = ctk.CTkButton(master=self, text="Select Image Save Folder")
+        # self.select_button.grid(row=6, column=0, padx=20, pady=0, sticky="ewns")
+
 
     def set_image_box_frame(self, image_box_frame):
         self.image_box_frame = image_box_frame
 
     def set_preview_frame(self, image_preview_frame):
         self.image_preview_frame = image_preview_frame
+
+    def select_image_save_folder(self):
+        self.master.master.selected_image_save_folder.set(filedialog.askdirectory())
 
 
 
@@ -376,7 +358,7 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
 
     def check_for_images_in_folder(self):
         try:
-            self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
+            self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
             # check if we need to update the image preview
             if len(self.image_labels) != len(self.images_in_folder):
                 self.update_image_preview()
@@ -407,7 +389,7 @@ class ImagePreviewFrame(ctk.CTkScrollableFrame):
     def remove_image(self, img_path):
         print("remove_image", img_path)
         os.remove(img_path)
-        self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder, "*.png")))
+        self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
         self.update_image_preview()
 
 
@@ -445,7 +427,34 @@ class ImageBoxFrame(ctk.CTkFrame):
         self.image_label.configure(image=img)
 
 
+class SelectSaveFolderFrame(ctk.CTkFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.master = master
 
+        self.grid_rowconfigure((0), weight=1)
+        self.grid_rowconfigure((1), weight=2)
+        self.grid_columnconfigure((0), weight=1)
+
+        ctk.CTkButton(master=self, text="Select Image Save Folder").grid(row=0, column=0, padx=10, pady=10, sticky="sew")
+
+        self.selected_save_folder_label = ctk.CTkLabel(master=self)
+        self.selected_save_folder_label.grid(row=1, column=0, padx=10, pady=10, sticky="new")
+
+        # trace when selected_image_save_folder variable is changed to adapt the label and the save button mode
+        self.master.master.selected_image_save_folder.trace('w', self.write_image_folder_variable)
+
+        self.write_image_folder_variable()
+
+
+    def write_image_folder_variable(self, *args):
+        selected_folder = self.master.master.selected_image_save_folder.get()
+        if os.path.isdir(selected_folder):
+            print("split folder", os.path.split(selected_folder))
+            self.selected_save_folder_label.configure(text=os.path.split(selected_folder)[-1])
+            # selected_folder = self.master.master.selected_image_save_folder.set(selected_folder)
+        else:
+            self.selected_save_folder_label.configure(text="No Folder Selected")
 
 class CalibrationFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -465,8 +474,11 @@ class CalibrationFrame(ctk.CTkFrame):
         self.left_setting_box = LeftSettingBox(master=self, calibration_inst = self.calibration_inst)
         self.left_setting_box.grid(row=0, column=0, padx=10, pady=(0,10), sticky="nsew")
         
+        self.select_save_folder_frame = SelectSaveFolderFrame(master=self)
+        self.select_save_folder_frame.grid(row=1, column=0, padx=10, pady=(0,10), sticky="nsew")
+
         self.image_preview_frame = ImagePreviewFrame(master=self, height=100)
-        self.image_preview_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=(0,10), sticky="nsew")
+        self.image_preview_frame.grid(row=1, column=1, padx=(0,10), pady=(0,10), sticky="nsew")
 
         # add the image box frame instance to settings so the we can display the calibration process
         self.left_setting_box.set_image_box_frame(self.image_box_frame)

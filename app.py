@@ -5,6 +5,7 @@ import os
 import numpy as np
 from PIL import Image
 import time
+import tkinter as tk
 
 
 from image_recording_frame import ImageRecordingFrame
@@ -19,10 +20,6 @@ ctk.set_appearance_mode("dark")
 
 
 
-
-
-
-
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -33,7 +30,7 @@ class App(ctk.CTk):
 
         # folder where calibration images are saved
         # the variable is on top level to share it between recording and calibration frames
-        self.selected_image_save_folder = None
+        self.selected_image_save_folder = tk.StringVar(value="No Folder Selected")
   
 
         self.grid_rowconfigure((0), weight=0)
@@ -42,6 +39,7 @@ class App(ctk.CTk):
 
         self.top_frame = ctk.CTkFrame(self, height=50)
         self.top_frame.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew")
+        
         self.image_record_mode_button = ctk.CTkButton(master=self.top_frame, text="Image Recording Mode", command = lambda: self.set_main_mode("image_record_mode"))
         self.image_record_mode_button.pack(side="left", fill="x", expand=1, padx=5, pady=5)
         self.image_record_mode_button.configure(state="disabled")
@@ -49,8 +47,10 @@ class App(ctk.CTk):
         self.calibration_mode_button = ctk.CTkButton(master=self.top_frame, text="Calibration Mode", command = lambda: self.set_main_mode("calibration_mode"))
         self.calibration_mode_button.pack(side="right", fill="x", expand=1, padx=5, pady=5)
 
-        self.main_frame = ImageRecordingFrame(self)
+
+        self.main_frame = CalibrationFrame(self)
         self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+        self.selected_image_save_folder.set("/Users/davidmoser/Downloads/test_save_folder")
 
         # self.main_frame = CalibrationFrame(self)
         # self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
@@ -59,7 +59,8 @@ class App(ctk.CTk):
 
 
     def DEVELOP_CALIBRATION_MODE(self):
-        self.selected_image_save_folder = "/Users/davidmoser/Downloads/test_save_folder"
+        self.selected_image_save_folder = tk.StringVar(value="/Users/davidmoser/Downloads/test_save_folder")
+        dir("!!!", self.selected_image_save_folder)
         self.set_main_mode("calibration_mode")
 
         self.main_frame = CalibrationFrame(self)
