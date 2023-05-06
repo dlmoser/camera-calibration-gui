@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image
 import time
 import tkinter as tk
+import setting_manager
 
 
 from image_recording_frame import ImageRecordingFrame
@@ -23,6 +24,7 @@ ctk.set_appearance_mode("dark")
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
+        setting_manager.init_setting_dict()
 
         self.geometry("900x600")
         self.title("Camera Calibration App")
@@ -40,17 +42,22 @@ class App(ctk.CTk):
         self.top_frame = ctk.CTkFrame(self, height=50)
         self.top_frame.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew")
         
+        self.top_frame.grid_columnconfigure((0,1,2), weight=1)
         self.image_record_mode_button = ctk.CTkButton(master=self.top_frame, text="Image Recording Mode", command = lambda: self.set_main_mode("image_record_mode"))
-        self.image_record_mode_button.pack(side="left", fill="x", expand=1, padx=5, pady=5)
-        self.image_record_mode_button.configure(state="disabled")
-        self.image_record_mode_button.configure(fg_color="grey")
+        self.image_record_mode_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        # self.image_record_mode_button.configure(state="disabled")
+        # self.image_record_mode_button.configure(fg_color="grey")
         self.calibration_mode_button = ctk.CTkButton(master=self.top_frame, text="Calibration Mode", command = lambda: self.set_main_mode("calibration_mode"))
-        self.calibration_mode_button.pack(side="right", fill="x", expand=1, padx=5, pady=5)
+        self.calibration_mode_button.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.calibration_mode_button.configure(fg_color="transparent")
+
+        self.display_mode_button = ctk.CTkButton(master=self.top_frame, text="Display Mode", command = lambda: self.set_main_mode("display_mode"))
+        self.display_mode_button.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+        self.display_mode_button.configure(fg_color="transparent")
 
 
-        self.main_frame = CalibrationFrame(self)
+        self.main_frame = ImageRecordingFrame(self)
         self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-        self.selected_image_save_folder.set("/Users/davidmoser/Downloads/test_save_folder")
 
         # self.main_frame = CalibrationFrame(self)
         # self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
@@ -59,8 +66,6 @@ class App(ctk.CTk):
 
 
     def DEVELOP_CALIBRATION_MODE(self):
-        self.selected_image_save_folder = tk.StringVar(value="/Users/davidmoser/Downloads/test_save_folder")
-        dir("!!!", self.selected_image_save_folder)
         self.set_main_mode("calibration_mode")
 
         self.main_frame = CalibrationFrame(self)
@@ -76,18 +81,24 @@ class App(ctk.CTk):
         if mode == "image_record_mode":
             self.main_frame = ImageRecordingFrame(self)
             self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-            self.image_record_mode_button.configure(state="disabled")
-            self.image_record_mode_button.configure(fg_color="grey")
-            self.calibration_mode_button.configure(state = "normal") 
-            self.calibration_mode_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
+            self.image_record_mode_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
+            self.calibration_mode_button.configure(fg_color="transparent")
+            self.display_mode_button.configure(fg_color = "transparent")
 
         elif mode == "calibration_mode":
             self.main_frame = CalibrationFrame(self)
             self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-            self.calibration_mode_button.configure(state="disabled")
-            self.calibration_mode_button.configure(fg_color="grey")
-            self.image_record_mode_button.configure(state = "normal") 
-            self.image_record_mode_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
+            self.image_record_mode_button.configure(fg_color = 'transparent')
+            self.calibration_mode_button.configure(fg_color=['#3B8ED0', '#1F6AA5'])
+            self.display_mode_button.configure(fg_color = "transparent")
+
+        elif mode == "display_mode":
+            self.main_frame = ctk.CTkFrame(self)
+            self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+            self.image_record_mode_button.configure(fg_color = 'transparent')
+            self.calibration_mode_button.configure(fg_color='transparent')
+            self.display_mode_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
+
 
 
 

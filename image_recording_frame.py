@@ -5,11 +5,12 @@ import glob
 from PIL import Image
 import numpy as np
 import threading
+import setting_manager as sm
 
 
 from cam_video_stream import CamStream
 from camera_calibration.find_chessboard_corners import find_and_draw_chessboard_corners
-from custom_widgets import LoadingAnimation
+from custom_widgets import LoadingAnimation, SelectSaveFolderFrame, ImagePreviewFrame
 
 
 class LeftSettingBox(ctk.CTkFrame):
@@ -38,41 +39,24 @@ class LeftSettingBox(ctk.CTkFrame):
         self.master.calibration_detector_selector = ctk.CTkComboBox(master=self,values=["No Detector", "Chessboard"])
         self.master.calibration_detector_selector.grid(row=3, column=0, padx=5, pady=5, sticky="ewn")
 
-
-        ctk.CTkButton(master=self, text="Select Image Save Folder", command=self.select_image_save_folder).grid(row=4, column=0, padx=5, pady=5, sticky="ews")
-        self.selected_save_folder_label = ctk.CTkLabel(master=self, text="")
-        self.selected_save_folder_label.grid(row=5, column=0, padx=5, pady=5, sticky="ewn")
-
-        # trace when selected_image_save_folder variable is changed to adapt the label and the save button mode
-        self.master.master.selected_image_save_folder.trace('w', self.write_image_folder_variable)
-
-
         self.save_image_button = ctk.CTkButton(master=self, text="Save Image", command=self.save_image)
         self.save_image_button.grid(row=6, column=0, padx=5, pady=5, sticky="ews")
         self.save_image_button.configure(state="disabled")
         self.save_image_button.configure(fg_color="grey")
 
-        # call the function once to set the init value
-        self.write_image_folder_variable()
+        # trace when selected_image_save_folder variable is changed to adapt the label and the save button mode
+        sm.setting_dict["selected_image_save_folder"].trace('w', self.set_save_button_status)
+        # call it once for initialization
+        self.set_save_button_status()
 
-
-    def write_image_folder_variable(self, *args):
-        selected_folder = self.master.master.selected_image_save_folder.get()
-        if os.path.isdir(selected_folder):
-            self.selected_save_folder_label.configure(text=os.path.split(selected_folder)[-1])
-            # selected_folder = self.master.master.selected_image_save_folder.set(selected_folder)
+    def set_save_button_status(self, *args):
+        if os.path.isdir(sm.setting_dict["selected_image_save_folder"].get()):
             self.save_image_button.configure(state = "normal") 
             self.save_image_button.configure(fg_color = ['#3B8ED0', '#1F6AA5'])
         else:
-            self.selected_save_folder_label.configure(text="No Folder Selected")
             self.save_image_button.configure(state="disabled")
             self.save_image_button.configure(fg_color="grey")
 
-
-    def select_image_save_folder(self):
-        folder_selected = filedialog.askdirectory()
-        print("folder selected: ", folder_selected)    
-        self.master.master.selected_image_save_folder.set(folder_selected)
 
         
     def save_image(self):
@@ -87,7 +71,7 @@ class LeftSettingBox(ctk.CTkFrame):
                 new_image_number = last_image_number + 1
                 image_name = "image_{:03d}.png".format(new_image_number)
 
-            img_save_path = os.path.join(self.master.master.selected_image_save_folder.get(), image_name)
+            img_save_path = os.path.join(sm.setting_dict["selected_image_save_folder"].get(), image_name)
             print("Save Image: ", img_save_path)
             Image.fromarray(self.cam_inst.frame.copy()).save(img_save_path)
         threading.Thread(target=save_image_thread).start()
@@ -95,7 +79,7 @@ class LeftSettingBox(ctk.CTkFrame):
         
 
     def get_images_in_folder(self):
-        return sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
+        return sorted(glob.glob(os.path.join(sm.setting_dict["selected_image_save_folder"].get(), "*.png")))
 
 
 
@@ -138,50 +122,50 @@ class ImageBoxFrame(ctk.CTkFrame):
 
         
 
-class ImagePreviewFrame(ctk.CTkScrollableFrame):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, orientation="horizontal", **kwargs)
-        self.master = master
-        self.image_labels = []
+# class ImagePreviewFrame(ctk.CTkScrollableFrame):
+#     def __init__(self, master, **kwargs):
+#         super().__init__(master, orientation="horizontal", **kwargs)
+#         self.master = master
+#         self.image_labels = []
 
-        self.check_for_images_in_folder()
-
-
-    def check_for_images_in_folder(self):
-        try:
-            self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
-            # check if we need to update the image preview
-            if len(self.image_labels) != len(self.images_in_folder):
-                self.update_image_preview()
-        except:
-            pass
-
-        self.after(1000, self.check_for_images_in_folder)
+#         self.check_for_images_in_folder()
 
 
-    def update_image_preview(self):
-        for label in self.image_labels:
-            label["img_label"].destroy()
-        self.image_labels = []
-        for i, image_path in enumerate(self.images_in_folder):
-            reference_height = 100
-            img = Image.open(image_path)
-            display_img = ctk.CTkImage(dark_image=img, size=(img.width/img.height*reference_height, reference_height))
-            img_label = ctk.CTkLabel(master=self, text="")
-            img_label.grid(row=0, column=i, padx=5, pady=5)
-            img_label.configure(image=display_img)
+#     def check_for_images_in_folder(self):
+#         try:
+#             self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
+#             # check if we need to update the image preview
+#             if len(self.image_labels) != len(self.images_in_folder):
+#                 self.update_image_preview()
+#         except:
+#             pass
+
+#         self.after(1000, self.check_for_images_in_folder)
 
 
-            button = ctk.CTkButton(master=img_label, text="x", width=15, height=15, command = lambda current_elem=image_path: self.remove_image(current_elem))
-            button.place(relx=1.0, rely=0.0, anchor="ne")
+#     def update_image_preview(self):
+#         for label in self.image_labels:
+#             label["img_label"].destroy()
+#         self.image_labels = []
+#         for i, image_path in enumerate(self.images_in_folder):
+#             reference_height = 100
+#             img = Image.open(image_path)
+#             display_img = ctk.CTkImage(dark_image=img, size=(img.width/img.height*reference_height, reference_height))
+#             img_label = ctk.CTkLabel(master=self, text="")
+#             img_label.grid(row=0, column=i, padx=5, pady=5)
+#             img_label.configure(image=display_img)
+
+
+#             button = ctk.CTkButton(master=img_label, text="x", width=15, height=15, command = lambda current_elem=image_path: self.remove_image(current_elem))
+#             button.place(relx=1.0, rely=0.0, anchor="ne")
             
-            self.image_labels.append({"img_label": img_label, "img_path": image_path})
+#             self.image_labels.append({"img_label": img_label, "img_path": image_path})
 
 
-    def remove_image(self, img_path):
-        os.remove(img_path)
-        self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
-        self.update_image_preview()
+#     def remove_image(self, img_path):
+#         os.remove(img_path)
+#         self.images_in_folder = sorted(glob.glob(os.path.join(self.master.master.selected_image_save_folder.get(), "*.png")))
+#         self.update_image_preview()
 
 
 
@@ -223,8 +207,11 @@ class ImageRecordingFrame(ctk.CTkFrame):
 
         self.left_setting_box = LeftSettingBox(master=self, cam_inst=self.cam_inst)
         self.left_setting_box.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        self.select_save_folder_frame = SelectSaveFolderFrame(master=self)
+        self.select_save_folder_frame.grid(row=1, column=0, padx=10, pady=(0,10), sticky="nsew")
         
-        ImagePreviewFrame(master=self, height=100).grid(row=1, column=0, columnspan=2, padx=10, pady=(0,10), sticky="nsew")
+        ImagePreviewFrame(master=self, height=100).grid(row=1, column=1, padx=(0,10), pady=(0,10), sticky="nsew")
     
     def create_image_recording_frame_when_cam_init_is_finished(self):
         if self.cam_inst is not None:
