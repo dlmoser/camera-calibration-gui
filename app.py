@@ -11,6 +11,7 @@ import setting_manager
 
 from image_recording_frame import ImageRecordingFrame
 from calibration_frame import CalibrationFrame
+from display_frame import DisplayFrame
 from cam_video_stream import CamStream
 from custom_widgets import LoadingAnimation
 
@@ -56,7 +57,7 @@ class App(ctk.CTk):
         self.display_mode_button.configure(fg_color="transparent")
 
 
-        self.main_frame = ImageRecordingFrame(self)
+        self.main_frame = DisplayFrame(self)
         self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
         # self.main_frame = CalibrationFrame(self)
@@ -93,7 +94,7 @@ class App(ctk.CTk):
             self.display_mode_button.configure(fg_color = "transparent")
 
         elif mode == "display_mode":
-            self.main_frame = ctk.CTkFrame(self)
+            self.main_frame = DisplayFrame(self)
             self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
             self.image_record_mode_button.configure(fg_color = 'transparent')
             self.calibration_mode_button.configure(fg_color='transparent')

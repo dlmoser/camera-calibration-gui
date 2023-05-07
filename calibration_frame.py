@@ -6,6 +6,7 @@ import glob
 from PIL import Image
 import numpy as np
 import time
+import json
 import threading
 import setting_manager as sm
 
@@ -58,7 +59,6 @@ class DistortionCoefficients(ctk.CTkFrame):
             k = ctk.CTkEntry(master=frame_elem, width = 40, height = 15, fg_color = "transparent", corner_radius=0 , font=(None, 10))
             k.grid(row=0, column=2, padx=0, pady=0, sticky="ew")
             k.configure(validate='focusout', validatecommand=(self.register(self.validate_entry), '%P', "%W", key), textvariable = v["value"])
-
 
 
     def validate_entry(self, value, widget_name, K_key):
@@ -189,7 +189,6 @@ class CameraMatrix(ctk.CTkFrame):
         K = np.zeros((3,3))
         for idx, (k, v) in enumerate(sorted(self.K.items())):
             K[int(idx/3), idx%3] = float(v["value"].get())
-        print("K", K)
         self.calibration_inst.normal_calibration_inst.set_camera_matrix(K)
 
 
@@ -214,7 +213,7 @@ class NormalCalibrationSettings(ctk.CTkFrame):
     def set_calibration_flags(self):
         
         selected_flag_list = [elem[0] for elem in self.calibration_checkbox_list if elem[1].get() == True]
-        print("aaa", selected_flag_list)
+        print("selected_flag_list", selected_flag_list)
         self.calibration_inst.normal_calibration_inst.set_calibration_flags(selected_flag_list)
 
 
@@ -244,8 +243,20 @@ class NormalCalibrationFrame(ctk.CTkFrame):
 
         ctk.CTkButton(master=self, text="Start Calibration", command = self.start_calibration).grid(row=1, column=0, padx=10, pady=5, sticky="ews")
 
+        self.save_calibration_parameter_button = ctk.CTkButton(master=self, text="Save Calibration Parameter", command = self.save_calibration_parameter)
+        self.save_calibration_parameter_button.grid(row=2, column=0, padx=10, pady=5, sticky="ews")
+        self.save_calibration_parameter_button.configure(state="disabled")
 
 
+    def save_calibration_parameter(self):
+        calibration_dict = self.calibration_inst.normal_calibration_inst.get_calibration_parameter()
+        files = [('Calibration Parameter', '*.json')]
+        file = filedialog.asksaveasfile(initialdir=sm.setting_dict["selected_image_save_folder"].get(), filetypes = files, defaultextension = files)
+        with open(file.name, "w") as f:
+            json.dump(calibration_dict, f, indent=4)
+        print("!!!!!", file.name, type(file.name))
+        sm.setting_dict["calibration_file_path"].set(file.name)
+        
 
     def start_calibration(self):
 
@@ -269,37 +280,9 @@ class NormalCalibrationFrame(ctk.CTkFrame):
                 self.master.master.image_box_frame.set_display_image(img)
                 time.sleep(0.1)
 
-
+            self.save_calibration_parameter_button.configure(state="normal")
         threading.Thread(target=calibration_thread).start()
 
-        # def find_all_chessboard_corners():
-        #     # try:
-        #     print("lala")
-        #     image_path = next(image_path_iter)
-        #     ret, img = self.calibration_inst.find_chessboard_corners_in_image(image_path)
-        #     self.master.image_box_frame.set_display_image(img)
-        #     # except StopIteration:
-        #     #     print("next function should be called here")
-        #     #     return
-            
-        #     self.after(50, find_all_chessboard_corners)
-
-        # image_path_iter = iter(self.master.image_preview_frame.images_in_folder)
-
-        # find_all_chessboard_corners()
-
-        # print("end function")
-          
-            
-        # for image_path in self.master.image_preview_frame.images_in_folder:
-
-        #     print(image_path)
-        #     ret, img = self.calibration_inst.find_chessboard_corners_in_image(image_path)
-
-        #     self.master.image_box_frame.set_display_image(img)
-        #     time.sleep(1)
-
-        # self.calibration_inst.start_normal_calibration(self.master.image_preview_frame.images_in_folder)   
 
 
 class LeftSettingBox(ctk.CTkTabview):

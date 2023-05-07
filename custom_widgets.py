@@ -76,7 +76,6 @@ class SelectSaveFolderFrame(ctk.CTkFrame):
         ctk.CTkLabel(master=self, text="Folder: ", height=20).grid(row=1, column=0, padx=10, pady=(10,0), sticky="nws")
         self.selected_save_folder_label = ctk.CTkLabel(master=self, height=15)
         self.selected_save_folder_label.grid(row=1, column=1, padx=10, pady=0, sticky="nws")
-
         
         ctk.CTkLabel(master=self, text="Image Number: ", height=20).grid(row=2, column=0, padx=10, pady=(0,10), sticky="nws")
         ctk.CTkLabel(master=self, textvariable = sm.setting_dict["number_of_images_in_folder"], height=15).grid(row=2, column=1, padx=10, pady=(0,10), sticky="w")

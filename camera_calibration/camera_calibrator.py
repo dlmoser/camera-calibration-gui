@@ -3,6 +3,14 @@ import numpy as np
 import time
 
 
+class RemapCalibrator():
+    def __init__(self, map1, map2):
+        self.map1 = np.array(map1, dtype=np.int16)
+        self.map2 = np.array(map2, dtype=np.int16)
+
+    def undistort_image(self, img):
+        img = cv2.remap(img, self.map1, self.map2, cv2.INTER_LINEAR)
+        return img
 
 class ChessboardCalibrator():
     calibrator_list = ["normal", "fisheye"]
@@ -64,6 +72,7 @@ class ChessboardCalibrator():
         img = cv2.imread(image_path)
         img = cv2.remap(img, self.map1, self.map2, cv2.INTER_LINEAR)
         return img
+    
 
 
 class NormalCalibrator():
@@ -137,4 +146,15 @@ class NormalCalibrator():
                                                            self.img_shape_xy, 
                                                            cv2.CV_16SC2)
         
+        print("map1 type", self.map1.dtype)
+        
+        self.calibration_dict = {"Knew": self.Knew.tolist(),
+                                "ROI": self.ROI,
+                                "map1": self.map1.tolist(),
+                                "map2": self.map2.tolist()}
+        
         return self.map1, self.map2
+    
+
+    def get_calibration_parameter(self):
+        return self.calibration_dict
