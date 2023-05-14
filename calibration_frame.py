@@ -255,7 +255,6 @@ class NormalCalibrationFrame(ctk.CTkFrame):
         file = filedialog.asksaveasfile(initialdir=sm.setting_dict["selected_image_save_folder"].get(), filetypes = files, defaultextension = files)
         with open(file.name, "w") as f:
             json.dump(calibration_dict, f, indent=4)
-        print("!!!!!", file.name, type(file.name))
         sm.setting_dict["calibration_file_path"].set(file.name)
         
 
