@@ -21,4 +21,7 @@ It consists of three mayor parts.
 3) Run software: python app.py
 
 
+
+
+
    
