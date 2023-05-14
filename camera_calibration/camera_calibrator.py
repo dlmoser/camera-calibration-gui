@@ -125,6 +125,7 @@ class NormalCalibrator():
         print("self.K ", self.K)
         print("self.dc ", self.dc)
         print("self.selected_calibration_flags ", self.selected_calibration_flags)
+ 
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, 
                                                                                     imgpoints,
                                                                                     self.img_shape_xy, 

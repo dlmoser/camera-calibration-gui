@@ -40,7 +40,7 @@ class LeftSettingBox(ctk.CTkFrame):
         # self.master.calibration_detector_selector.grid(row=3, column=0, padx=5, pady=5, sticky="ewn")
 
         ctk.CTkButton(master=self, text="Load Calibration Parameter", command=self.load_calibration_parameter).grid(row=2, column=0, padx=5, pady=5, sticky="ewn")
-        self.calibration_parameter_label = ctk.CTkLabel(master=self, text="no calibration file")
+        self.calibration_parameter_label = ctk.CTkLabel(master=self, text="no calibration file selected")
         self.calibration_parameter_label.grid(row=4, column=0, padx=5, pady=5, sticky="ewn")
 
         # trace when calibration_file_path variable is changed to adapt the label and the save button mode
@@ -51,16 +51,15 @@ class LeftSettingBox(ctk.CTkFrame):
 
     def write_calibration_file_path(self, *args):
         file_path = sm.setting_dict["calibration_file_path"].get()
-        try:
+        if file_path != "":
             self.calibration_parameter_label.configure(text=os.path.split(file_path)[-1])
-        except:
-            self.calibration_parameter_label.configure(text="no calibration file")
+        else:
+            self.calibration_parameter_label.configure(text="no calibration file selected")
 
 
     def load_calibration_parameter(self):
         file_path = filedialog.askopenfilename(initialdir=sm.setting_dict["selected_image_save_folder"].get(), title="Select Calibration Parameter File", filetypes=[("Calibration Parameter", "*.json")])
         sm.setting_dict["calibration_file_path"].set(file_path)
-        self.calibration_parameter_label.configure(text=os.path.split(file_path)[-1])
 
 
 
@@ -110,7 +109,6 @@ class ImageBoxFrame(ctk.CTkFrame):
 
 
     def resizer(self, e):
-        print("resize")
         self.current_size = (e.width,e.height)
         img = ctk.CTkImage(dark_image=self.current_frame, size=self.current_size)
         self.image_label.configure(image=img)

@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import filedialog
 import tkinter as tk
+from tkinter import messagebox
 import os
 import glob
 from PIL import Image
@@ -9,6 +10,7 @@ import time
 import json
 import threading
 import setting_manager as sm
+
 
 from cam_video_stream import CamStream
 from camera_calibration.camera_calibrator import ChessboardCalibrator
@@ -95,7 +97,6 @@ class DistortionCoefficients(ctk.CTkFrame):
         dc = np.zeros((14))
         for idx, (k, v) in enumerate(sorted(self.dc.items())):
             dc[idx] = float(v["value"].get())
-        print("dc", dc)
         self.calibration_inst.normal_calibration_inst.set_distortion_coefficients(dc)
 
 
@@ -270,7 +271,10 @@ class NormalCalibrationFrame(ctk.CTkFrame):
                 self.master.master.image_box_frame.set_display_image(img)
                 time.sleep(0.1)
 
-            self.calibration_inst.calculate_calibration_matrix()
+            try:
+                self.calibration_inst.calculate_calibration_matrix()
+            except Exception as e:
+                messagebox.showerror('Python Error', e)
 
             for image_path in self.master.master.image_preview_frame.images_in_folder:
 
@@ -319,7 +323,6 @@ class ImageBoxFrame(ctk.CTkFrame):
         self.master = master
         self.current_size = None
         
-
         self.bind('<Configure>', self.resizer)
 
         self.current_frame = Image.fromarray(np.ones((100,int(100*1.25)), np.uint8)*0)
@@ -341,7 +344,6 @@ class ImageBoxFrame(ctk.CTkFrame):
 
 
     def resizer(self, e):
-        print("resize")
         self.current_size = (e.width,e.height)
         img = ctk.CTkImage(dark_image=self.current_frame, size=self.current_size)
         self.image_label.configure(image=img)

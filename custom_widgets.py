@@ -90,7 +90,6 @@ class SelectSaveFolderFrame(ctk.CTkFrame):
     def write_image_folder_variable(self, *args):
         selected_folder = sm.setting_dict["selected_image_save_folder"].get()
         if os.path.isdir(selected_folder):
-            print("split folder", os.path.split(selected_folder))
             self.selected_save_folder_label.configure(text=os.path.split(selected_folder)[-1])
             # selected_folder = self.master.master.selected_image_save_folder.set(selected_folder)
         else:
