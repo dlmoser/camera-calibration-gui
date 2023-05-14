@@ -57,7 +57,7 @@ class App(ctk.CTk):
         self.display_mode_button.configure(fg_color="transparent")
 
 
-        self.main_frame = DisplayFrame(self)
+        self.main_frame = ImageRecordingFrame(self)
         self.main_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
         # self.main_frame = CalibrationFrame(self)

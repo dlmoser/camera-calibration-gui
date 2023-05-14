@@ -114,7 +114,6 @@ class ImageBoxFrame(ctk.CTkFrame):
 
 
     def resizer(self, e):
-        print("resize")
         self.current_size = (e.width,e.height)
         img = ctk.CTkImage(dark_image=self.current_frame, size=self.current_size)
         self.image_label.configure(image=img)
